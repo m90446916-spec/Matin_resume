@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBERNETIC_INTERFACE // MOHAMMAD-MATIN MOMENI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary: #00ff66;
+            --cyan: #00f3ff;
+            --pink: #ff0055;
+            --bg: #030508;
+            --glass: rgba(6, 11, 25, 0.8);
+            --border: rgba(0, 243, 255, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Scanline Overlay */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #canvas-3d {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        .main-wrapper {
+            position: relative;
+            z-index: 2;
+            width: 90%;
+            max-width: 650px;
+            perspective: 1000px;
+        }
+
+        .cyber-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            backdrop-filter: blur(25px);
+            box-shadow: 0 0 60px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 255, 102, 0.1);
+            padding: 35px;
+            transition: transform 0.1s ease-out;
+            transform-style: preserve-3d;
+        }
+
+        .hud-corner {
+            position: absolute;
+            width: 20px; height: 20px;
+            border: 2px solid var(--primary);
+        }
+        .top-left { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .top-right { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+        .bottom-right { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+        .header-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            dir: ltr;
+        }
+
+        .pulse-node {
+            display: inline-block;
+            width: 10px; height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--primary);
+            animation: pulse 1.2s infinite;
+        }
+
+        .glitch-text {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary);
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .typewriter-box {
+            text-align: center;
+            color: var(--cyan);
+            font-size: 14px;
+            height: 25px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 8px var(--cyan);
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .skill-node {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-left: 4px solid var(--cyan);
+            padding: 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .skill-node:hover {
+            border-color: var(--primary);
+            border-left-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
+            transform: translateZ(20px);
+        }
+
+        .skill-label { font-size: 11px; color: #888; text-transform: uppercase; }
+        .skill-value { font-size: 15px; color: #fff; font-weight: bold; margin-top: 4px; }
+
+        .btn-portal {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(0,255,102,0.1), rgba(0,243,255,0.2));
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2);
+            cursor: pointer;
+        }
+
+        .btn-portal:hover {
+            background: var(--primary);
+            color: var(--bg);
+            box-shadow: 0 0 40px var(--primary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.8); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-3d"></div>
+
+    <div class="main-wrapper">
+        <div class="cyber-card" id="tilt-card">
+            <div class="hud-corner top-left"></div>
+            <div class="hud-corner top-right"></div>
+            <div class="hud-corner bottom-left"></div>
+            <div class="hud-corner bottom-right"></div>
+
+            <div class="header-status">
+                <div><span class="pulse-node"></span> <span style="font-size: 12px; color: #aaa; margin-left: 5px;">CORE ENGINE ONLINE</span></div>
+                <div style="font-size: 12px; color: var(--cyan);">SYS_ID // 0x16</div>
+            </div>
+
+            <div class="glitch-text">محمد متین مومنی</div>
+            <div class="typewriter-box" id="typewriter"></div>
+
+            <div class="skills-grid">
+                <div class="skill-node" onclick="triggerAudio(600)">
+                    <div class="skill-label">// کدنویسی اصلی</div>
+                    <div class="skill-value">Python 3.x</div>
+                </div>
+                <div class="skill-node" onclick="triggerAudio(750)">
+                    <div class="skill-label">// طراحی صنعتی</div>
+                    <div class="skill-value">SolidWorks</div>
+                </div>
+                <div class="skill-node" onclick="triggerAudio(900)">
+                    <div class="skill-label">// سخت‌افزار</div>
+                    <div class="skill-value">Hardware Modding</div>
+                </div>
+                <div class="skill-node" onclick="triggerAudio(1050)">
+                    <div class="skill-label">// سن</div>
+                    <div class="skill-value">۱۶ سال</div>
+                </div>
+            </div>
+
+            <a href="https://github.com/gggg8888ob-pixle" target="_blank" class="btn-portal" onclick="triggerAudio(1200)">
+                <span>پروفایل رسمی گیت‌هاب</span>
+                <span>&#10140;</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // --- 3D THREE.JS SPHERE BACKGROUND ---
+        const container = document.getElementById('canvas-3d');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Cyber Sphere Construction
+        const geometry = new THREE.IcosahedronGeometry(3.2, 2);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x00f3ff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.25
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        // Inner Glowing Particles
+        const particleGeo = new THREE.BufferGeometry();
+        const count = 500;
+        const posArray = new Float32Array(count * 3);
+        for(let i=0; i<count*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 12;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particleMat = new THREE.PointsMaterial({ size: 0.03, color: 0x00ff66 });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        camera.position.z = 6;
+
+        // Mouse/Touch Interaction
+        let mouseX = 0, mouseY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.x += 0.003;
+            sphere.rotation.y += 0.005;
+            particles.rotation.y -= 0.002;
+
+            sphere.rotation.x += mouseY * 0.02;
+            sphere.rotation.y += mouseX * 0.02;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- 3D PARALLAX TILT EFFECT ---
+        const card = document.getElementById('tilt-card');
+        window.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.clientX) / 20;
+            const y = (window.innerHeight / 2 - e.clientY) / 20;
+            card.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+        });
+
+        // --- AUDIO SYNTHESIZER ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function triggerAudio(freq) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        // --- TYPEWRITER ANIMATION ---
+        const textArray = ["> توسعه‌دهنده پایتون", "> طراح قطعات SolidWorks", "> متخصص برنامه‌نویسی و سخت‌افزار"];
+        let textIdx = 0, charIdx = 0, isDeleting = false;
+        const speed = 100, target = document.getElementById('typewriter');
+
+        function typeText() {
+            const currentStr = textArray[textIdx];
+            if (isDeleting) {
+                target.textContent = currentStr.substring(0, charIdx--);
+                if (charIdx < 0) { isDeleting = false; textIdx = (textIdx + 1) % textArray.length; }
+            } else {
+                target.textContent = currentStr.substring(0, charIdx++);
+                if (charIdx > currentStr.length) { isDeleting = true; setTimeout(typeText, 2000); return; }
+            }
+            setTimeout(typeText, isDeleting ? 50 : speed);
+        }
+        typeText();
+    </script>
+</body>
+</html>
